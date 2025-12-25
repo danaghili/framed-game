@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import { BookOpen, Filter, Fingerprint, MessageSquare, FileText, MapPin, User, Package } from 'lucide-react'
+import ResponsiveModal from '../responsive/ResponsiveModal'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 // Evidence categories with their styling
 const EVIDENCE_CATEGORIES = {
@@ -173,6 +175,7 @@ const EvidenceCard = ({ clue, category, index, suspects }) => {
 
 const EvidenceJournalModal = ({ clues, suspects, onClose }) => {
   const [activeFilter, setActiveFilter] = useState('all')
+  const isMobile = useIsMobile()
 
   // Categorize all clues
   const categorizedClues = useMemo(() => {
@@ -198,94 +201,102 @@ const EvidenceJournalModal = ({ clues, suspects, onClose }) => {
     return categorizedClues.filter(c => c.category === activeFilter)
   }, [categorizedClues, activeFilter])
 
+  // Summary footer for mobile
+  const summaryFooter = clues.length > 0 && isMobile ? (
+    <div className="flex gap-3 flex-wrap text-xs text-gray-400">
+      {Object.entries(EVIDENCE_CATEGORIES).map(([key, config]) => {
+        const count = categoryCounts[key]
+        if (count === 0) return null
+        const Icon = config.icon
+        return (
+          <div key={key} className="flex items-center gap-1">
+            <Icon className={`w-3 h-3 ${config.color}`} />
+            <span>{count}</span>
+          </div>
+        )
+      })}
+    </div>
+  ) : null
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 border-4 border-indigo-600 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-3xl font-bold text-indigo-400 flex items-center gap-3">
-              <BookOpen className="w-8 h-8" />
-              EVIDENCE JOURNAL
-            </h2>
-            <p className="text-sm text-gray-400 mt-1">
-              {clues.length} piece{clues.length !== 1 ? 's' : ''} of evidence collected
-            </p>
+    <ResponsiveModal
+      isOpen={true}
+      onClose={onClose}
+      title="EVIDENCE JOURNAL"
+      size="xl"
+      borderColor="border-indigo-600"
+      stickyFooter={summaryFooter}
+    >
+      <p className="text-sm text-gray-400 mb-4">
+        {clues.length} piece{clues.length !== 1 ? 's' : ''} of evidence collected
+      </p>
+
+      {/* Filter Bar - Scrollable on mobile */}
+      <div className={`flex items-center gap-2 mb-4 ${isMobile ? 'overflow-x-auto hide-scrollbar pb-2' : 'flex-wrap'}`}>
+        <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <button
+          onClick={() => setActiveFilter('all')}
+          className={`px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap touch-active ${
+            activeFilter === 'all'
+              ? 'bg-indigo-600 text-white'
+              : 'bg-gray-700 text-gray-400'
+          }`}
+        >
+          All ({categoryCounts.all})
+        </button>
+        {Object.entries(EVIDENCE_CATEGORIES).map(([key, config]) => (
+          categoryCounts[key] > 0 && (
+            <FilterButton
+              key={key}
+              config={config}
+              isActive={activeFilter === key}
+              onClick={() => setActiveFilter(key)}
+              count={categoryCounts[key]}
+            />
+          )
+        ))}
+      </div>
+
+      {/* Evidence List */}
+      <div className="space-y-2">
+        {filteredClues.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            {clues.length === 0
+              ? 'No evidence collected yet. Search rooms and interrogate suspects!'
+              : 'No evidence matches this filter.'}
           </div>
-          <button
-            onClick={onClose}
-            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-bold"
-          >
-            Close
-          </button>
-        </div>
-
-        {/* Filter Bar */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <button
-            onClick={() => setActiveFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
-              activeFilter === 'all'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-            }`}
-          >
-            All ({categoryCounts.all})
-          </button>
-          {Object.entries(EVIDENCE_CATEGORIES).map(([key, config]) => (
-            categoryCounts[key] > 0 && (
-              <FilterButton
-                key={key}
-                config={config}
-                isActive={activeFilter === key}
-                onClick={() => setActiveFilter(key)}
-                count={categoryCounts[key]}
-              />
-            )
-          ))}
-        </div>
-
-        {/* Evidence List */}
-        <div className="flex-1 overflow-y-auto space-y-2">
-          {filteredClues.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              {clues.length === 0
-                ? 'No evidence collected yet. Search rooms and interrogate suspects to gather clues!'
-                : 'No evidence matches this filter.'}
-            </div>
-          ) : (
-            [...filteredClues].reverse().map((item) => (
-              <EvidenceCard
-                key={item.index}
-                clue={item.clue}
-                category={item.category}
-                index={item.index}
-                suspects={suspects}
-              />
-            ))
-          )}
-        </div>
-
-        {/* Summary */}
-        {clues.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-700">
-            <div className="flex gap-4 text-xs text-gray-400">
-              {Object.entries(EVIDENCE_CATEGORIES).map(([key, config]) => {
-                const count = categoryCounts[key]
-                if (count === 0) return null
-                const Icon = config.icon
-                return (
-                  <div key={key} className="flex items-center gap-1">
-                    <Icon className={`w-3 h-3 ${config.color}`} />
-                    <span>{count} {config.label}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+        ) : (
+          [...filteredClues].reverse().map((item) => (
+            <EvidenceCard
+              key={item.index}
+              clue={item.clue}
+              category={item.category}
+              index={item.index}
+              suspects={suspects}
+            />
+          ))
         )}
       </div>
-    </div>
+
+      {/* Summary - Desktop only */}
+      {clues.length > 0 && !isMobile && (
+        <div className="mt-4 pt-4 border-t border-gray-700">
+          <div className="flex gap-4 text-xs text-gray-400">
+            {Object.entries(EVIDENCE_CATEGORIES).map(([key, config]) => {
+              const count = categoryCounts[key]
+              if (count === 0) return null
+              const Icon = config.icon
+              return (
+                <div key={key} className="flex items-center gap-1">
+                  <Icon className={`w-3 h-3 ${config.color}`} />
+                  <span>{count} {config.label}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </ResponsiveModal>
   )
 }
 

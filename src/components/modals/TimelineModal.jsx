@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Clock, AlertTriangle, Check, HelpCircle, X as XIcon } from 'lucide-react'
+import { Clock, AlertTriangle, Check, HelpCircle } from 'lucide-react'
 import { ALIBI_STRENGTH_CONFIG, MURDER_TIME } from '../../data/timeline'
 import { getAlibiSummary } from '../../utils/timelineGenerator'
+import ResponsiveModal from '../responsive/ResponsiveModal'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const AlibiStrengthBadge = ({ strength }) => {
   const config = ALIBI_STRENGTH_CONFIG[strength]
@@ -112,81 +114,78 @@ const SuspectSummary = ({ timeline, isSelected, onClick }) => {
 const TimelineModal = ({ timelines, suspects, onClose }) => {
   const [selectedSuspect, setSelectedSuspect] = useState(suspects[0])
   const timeline = timelines[selectedSuspect]
+  const isMobile = useIsMobile()
 
   if (!timeline) {
     return null
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 border-4 border-purple-600 rounded-lg p-6 max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-3xl font-bold text-purple-400">TIMELINE ANALYSIS</h2>
-            <p className="text-sm text-gray-400 mt-1">
-              Murder occurred at {MURDER_TIME}. Verify each suspect&apos;s whereabouts.
-            </p>
+    <ResponsiveModal
+      isOpen={true}
+      onClose={onClose}
+      title="TIMELINE ANALYSIS"
+      size="full"
+      borderColor="border-purple-600"
+    >
+      <p className="text-sm text-gray-400 mb-4">
+        Murder occurred at {MURDER_TIME}. Verify each suspect&apos;s whereabouts.
+      </p>
+
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-4'}`}>
+        {/* Suspect List - Horizontal scroll on mobile */}
+        <div className={isMobile ? 'order-first' : ''}>
+          <h3 className="text-sm font-bold text-gray-400 mb-2">SUSPECTS</h3>
+          <div className={`${isMobile ? 'flex gap-2 overflow-x-auto hide-scrollbar pb-2' : 'space-y-2'}`}>
+            {suspects.map(suspect => (
+              <div key={suspect} className={isMobile ? 'flex-shrink-0 w-40' : ''}>
+                <SuspectSummary
+                  timeline={timelines[suspect]}
+                  isSelected={selectedSuspect === suspect}
+                  onClick={() => setSelectedSuspect(suspect)}
+                />
+              </div>
+            ))}
           </div>
-          <button
-            onClick={onClose}
-            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-bold"
-          >
-            Close
-          </button>
         </div>
 
-        <div className="grid grid-cols-4 gap-4">
-          {/* Suspect List */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-bold text-gray-400 mb-2">SUSPECTS</h3>
-            {suspects.map(suspect => (
-              <SuspectSummary
-                key={suspect}
-                timeline={timelines[suspect]}
-                isSelected={selectedSuspect === suspect}
-                onClick={() => setSelectedSuspect(suspect)}
-              />
+        {/* Timeline Detail */}
+        <div className={isMobile ? '' : 'col-span-3'}>
+          <div className={`flex ${isMobile ? 'flex-col gap-1' : 'items-center justify-between'} mb-4`}>
+            <h3 className="text-xl font-bold text-white">
+              {selectedSuspect}&apos;s Timeline
+            </h3>
+            <span className="text-sm text-gray-400">
+              Usually found in: {timeline.location}
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {timeline.slots.map(slot => (
+              <TimeSlotRow key={slot.slotId} slot={slot} />
             ))}
           </div>
 
-          {/* Timeline Detail */}
-          <div className="col-span-3">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white">
-                {selectedSuspect}&apos;s Timeline
-              </h3>
-              <span className="text-sm text-gray-400">
-                Usually found in: {timeline.location}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {timeline.slots.map(slot => (
-                <TimeSlotRow key={slot.slotId} slot={slot} />
+          {/* Legend */}
+          <div className="mt-6 p-4 bg-gray-900 rounded-lg">
+            <h4 className="text-sm font-bold text-gray-400 mb-2">ALIBI STRENGTH GUIDE</h4>
+            <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {Object.entries(ALIBI_STRENGTH_CONFIG).map(([key, config]) => (
+                <div key={key} className="flex items-center gap-2">
+                  <span
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: config.color }}
+                  />
+                  <span className="text-xs text-gray-300">
+                    <strong>{config.label}:</strong> {config.description}
+                  </span>
+                </div>
               ))}
-            </div>
-
-            {/* Legend */}
-            <div className="mt-6 p-4 bg-gray-900 rounded-lg">
-              <h4 className="text-sm font-bold text-gray-400 mb-2">ALIBI STRENGTH GUIDE</h4>
-              <div className="grid grid-cols-2 gap-2">
-                {Object.entries(ALIBI_STRENGTH_CONFIG).map(([key, config]) => (
-                  <div key={key} className="flex items-center gap-2">
-                    <span
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: config.color }}
-                    />
-                    <span className="text-xs text-gray-300">
-                      <strong>{config.label}:</strong> {config.description}
-                    </span>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ResponsiveModal>
   )
 }
 

@@ -1,5 +1,7 @@
 import { ClipboardList, Check, X, HelpCircle, Target, RotateCcw } from 'lucide-react'
 import { DEDUCTION_STATE } from '../../hooks/useDeductionBoard'
+import ResponsiveModal from '../responsive/ResponsiveModal'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const STATE_CONFIG = {
   [DEDUCTION_STATE.UNKNOWN]: {
@@ -150,88 +152,95 @@ const DeductionBoardModal = ({
   summary,
   onClose
 }) => {
+  const isMobile = useIsMobile()
+
+  const resetButton = (
+    <button
+      onClick={deductionActions.clearAll}
+      className="bg-gray-600 hover:bg-gray-700 px-4 py-3 md:py-2 rounded-lg font-bold flex items-center justify-center gap-2 w-full touch-active"
+    >
+      <RotateCcw className="w-4 h-4" />
+      Reset All
+    </button>
+  )
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 border-4 border-teal-600 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-3xl font-bold text-teal-400 flex items-center gap-3">
-              <ClipboardList className="w-8 h-8" />
-              DEDUCTION BOARD
-            </h2>
-            <p className="text-sm text-gray-400 mt-1">
-              Click items to cycle through: Unknown → Maybe → Ruled Out → Suspected
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={deductionActions.clearAll}
-              className="bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg font-bold flex items-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset
-            </button>
-            <button
-              onClick={onClose}
-              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-bold"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+    <ResponsiveModal
+      isOpen={true}
+      onClose={onClose}
+      title="DEDUCTION BOARD"
+      size="full"
+      borderColor="border-teal-600"
+      stickyFooter={isMobile ? resetButton : null}
+    >
+      <p className="text-sm text-gray-400 mb-4">
+        Tap items to cycle through: Unknown → Maybe → Ruled Out → Suspected
+      </p>
 
-        <div className="grid grid-cols-4 gap-4">
-          {/* Suspects */}
-          <DeductionSection
-            title="SUSPECTS"
-            items={suspects}
-            itemStates={deductionState.suspects}
-            onSetState={deductionActions.setSuspectState}
-            color="border-blue-500"
-          />
+      {/* Grid - Responsive */}
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-4'}`}>
+        {/* Summary first on mobile for context */}
+        {isMobile && <SummaryPanel summary={summary} />}
 
-          {/* Weapons */}
-          <DeductionSection
-            title="WEAPONS"
-            items={weapons}
-            itemStates={deductionState.weapons}
-            onSetState={deductionActions.setWeaponState}
-            color="border-red-500"
-          />
+        {/* Suspects */}
+        <DeductionSection
+          title="SUSPECTS"
+          items={suspects}
+          itemStates={deductionState.suspects}
+          onSetState={deductionActions.setSuspectState}
+          color="border-blue-500"
+        />
 
-          {/* Rooms */}
-          <DeductionSection
-            title="ROOMS"
-            items={rooms}
-            itemStates={deductionState.rooms}
-            onSetState={deductionActions.setRoomState}
-            color="border-purple-500"
-          />
+        {/* Weapons */}
+        <DeductionSection
+          title="WEAPONS"
+          items={weapons}
+          itemStates={deductionState.weapons}
+          onSetState={deductionActions.setWeaponState}
+          color="border-red-500"
+        />
 
-          {/* Summary */}
-          <SummaryPanel summary={summary} />
-        </div>
+        {/* Rooms */}
+        <DeductionSection
+          title="ROOMS"
+          items={rooms}
+          itemStates={deductionState.rooms}
+          onSetState={deductionActions.setRoomState}
+          color="border-purple-500"
+        />
 
-        {/* Legend */}
-        <div className="mt-6 p-4 bg-gray-900 rounded-lg">
-          <h4 className="text-sm font-bold text-gray-400 mb-2">LEGEND</h4>
-          <div className="flex gap-6">
-            {Object.entries(STATE_CONFIG).map(([key, config]) => {
-              const Icon = config.icon
-              return (
-                <div key={key} className="flex items-center gap-2">
-                  <span className={`${config.color} px-2 py-0.5 rounded text-xs font-bold text-white flex items-center gap-1`}>
-                    <Icon className="w-3 h-3" />
-                    {config.label}
-                  </span>
+        {/* Summary on desktop */}
+        {!isMobile && <SummaryPanel summary={summary} />}
+      </div>
+
+      {/* Legend - Compact on mobile */}
+      <div className="mt-6 p-4 bg-gray-900 rounded-lg">
+        <h4 className="text-sm font-bold text-gray-400 mb-2">LEGEND</h4>
+        <div className={`flex ${isMobile ? 'flex-wrap gap-3' : 'gap-6'}`}>
+          {Object.entries(STATE_CONFIG).map(([key, config]) => {
+            const Icon = config.icon
+            return (
+              <div key={key} className="flex items-center gap-2">
+                <span className={`${config.color} px-2 py-0.5 rounded text-xs font-bold text-white flex items-center gap-1`}>
+                  <Icon className="w-3 h-3" />
+                  {config.label}
+                </span>
+                {!isMobile && (
                   <span className="text-xs text-gray-400 capitalize">{key.replace('_', ' ')}</span>
-                </div>
-              )
-            })}
-          </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
-    </div>
+
+      {/* Desktop reset button */}
+      {!isMobile && (
+        <div className="mt-4 flex justify-end">
+          {resetButton}
+        </div>
+      )}
+    </ResponsiveModal>
   )
 }
 

@@ -4,6 +4,10 @@ import { useState, Component } from 'react'
 import { useGameState } from './hooks/useGameState'
 import { useOpponentAI } from './hooks/useOpponentAI'
 import { useDeductionBoard } from './hooks/useDeductionBoard'
+import { useIsMobile } from './hooks/useIsMobile'
+
+// Mobile Components
+import MobileNav from './components/mobile/MobileNav'
 
 // Data
 import { SUSPECTS, SUSPECT_PROFILES } from './data/suspects'
@@ -67,6 +71,10 @@ const FramedGame = () => {
   const { state, actions } = useGameState()
   const { makeMove, shouldAccuse } = useOpponentAI()
   const { state: deductionState, actions: deductionActions, summary: deductionSummary } = useDeductionBoard()
+  const isMobile = useIsMobile()
+
+  // Mobile navigation state
+  const [activeTab, setActiveTab] = useState('map')
 
   // Modal visibility state
   const [showAccuseModal, setShowAccuseModal] = useState(false)
@@ -131,9 +139,26 @@ const FramedGame = () => {
     return <StartScreen onStart={actions.startGame} />
   }
 
+  // Handle mobile tab changes that open modals
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    if (tab === 'evidence') {
+      setShowEvidenceJournal(true)
+    } else if (tab === 'board') {
+      setShowDeductionModal(true)
+    } else if (tab === 'menu') {
+      // Show a menu with additional options
+      setShowEventsModal(true)
+    }
+  }
+
+  const showBottomNav = isMobile && state.phase === GAME_PHASE.PLAYING
+
   // Main game UI
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-red-900 to-black text-gray-100 p-4">
+    <div className={`min-h-screen bg-gradient-to-br from-gray-900 via-red-900 to-black text-gray-100 p-4 ${
+      showBottomNav ? 'has-bottom-nav' : ''
+    }`}>
       <div className="max-w-7xl mx-auto">
         <GameHeader
           turn={state.turn}
@@ -150,12 +175,12 @@ const FramedGame = () => {
           />
         )}
 
-        {/* Action Buttons - Row 1 */}
-        <div className="grid grid-cols-4 gap-2 mb-2">
+        {/* Action Buttons - Responsive Grid */}
+        <div className={`grid gap-2 mb-2 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
           <button
             onClick={() => setShowAccuseModal(true)}
             disabled={gameOver}
-            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-xs"
+            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-3 md:py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-sm md:text-xs touch-active"
           >
             ACCUSE
           </button>
@@ -163,7 +188,7 @@ const FramedGame = () => {
           <button
             onClick={() => setShowDossier(true)}
             disabled={gameOver}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-xs"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-3 md:py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-sm md:text-xs touch-active"
           >
             DOSSIERS
           </button>
@@ -171,7 +196,7 @@ const FramedGame = () => {
           <button
             onClick={() => setShowTimelineModal(true)}
             disabled={gameOver}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-xs"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-3 md:py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-sm md:text-xs touch-active"
           >
             TIMELINE
           </button>
@@ -179,18 +204,18 @@ const FramedGame = () => {
           <button
             onClick={() => setShowWitnessModal(true)}
             disabled={gameOver}
-            className="bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-xs"
+            className="bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-3 md:py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-sm md:text-xs touch-active"
           >
             WITNESSES
           </button>
         </div>
 
         {/* Action Buttons - Row 2 */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className={`grid gap-2 mb-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
           <button
             onClick={() => setShowEvidenceJournal(true)}
             disabled={gameOver}
-            className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-xs"
+            className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-3 md:py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-sm md:text-xs touch-active"
           >
             EVIDENCE
           </button>
@@ -198,7 +223,7 @@ const FramedGame = () => {
           <button
             onClick={() => setShowDocuments(true)}
             disabled={gameOver}
-            className="bg-gradient-to-r from-yellow-600 to-orange-500 hover:from-yellow-700 hover:to-orange-600 disabled:from-gray-700 disabled:to-gray-700 text-white py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-xs"
+            className="bg-gradient-to-r from-yellow-600 to-orange-500 hover:from-yellow-700 hover:to-orange-600 disabled:from-gray-700 disabled:to-gray-700 text-white py-3 md:py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-sm md:text-xs touch-active"
           >
             DOCUMENTS
           </button>
@@ -206,7 +231,7 @@ const FramedGame = () => {
           <button
             onClick={() => setShowDeductionModal(true)}
             disabled={gameOver}
-            className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-xs"
+            className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-3 md:py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-sm md:text-xs touch-active"
           >
             DEDUCTIONS
           </button>
@@ -214,26 +239,31 @@ const FramedGame = () => {
           <button
             onClick={() => setShowRelationshipsModal(true)}
             disabled={gameOver}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-xs"
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-700 disabled:to-gray-700 text-white py-3 md:py-2 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all disabled:scale-100 disabled:cursor-not-allowed text-sm md:text-xs touch-active"
           >
             RELATIONSHIPS
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          {/* Left: Manor Map */}
-          <FloorplanMap
-            playerPosition={state.playerPosition}
-            opponentPosition={state.opponentPosition}
-            blockedRooms={state.blockedRooms}
-            evidence={state.evidence}
-            gameOver={gameOver}
-            onRoomClick={handleSearchRoom}
-          />
+        {/* Main Game Area - Responsive Grid */}
+        <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
+          {/* Map - Full width on mobile, show when on map tab or desktop */}
+          {(!isMobile || activeTab === 'map' || activeTab === 'search') && (
+            <div className={isMobile ? 'col-span-1' : 'col-span-1'}>
+              <FloorplanMap
+                playerPosition={state.playerPosition}
+                opponentPosition={state.opponentPosition}
+                blockedRooms={state.blockedRooms}
+                evidence={state.evidence}
+                gameOver={gameOver}
+                onRoomClick={handleSearchRoom}
+              />
+            </div>
+          )}
 
           {/* Interrogation Panel */}
           {state.selectedAction === 'interrogate' && (
-            <div className="col-span-2">
+            <div className={isMobile ? 'col-span-1' : 'col-span-2'}>
               <InterrogationPanel
                 suspects={SUSPECTS}
                 suspectProfiles={SUSPECT_PROFILES}
@@ -247,7 +277,7 @@ const FramedGame = () => {
 
           {/* Weapon Examination Panel */}
           {state.selectedAction === 'examine' && (
-            <div className="col-span-2">
+            <div className={isMobile ? 'col-span-1' : 'col-span-2'}>
               <WeaponExaminationPanel
                 weapons={WEAPONS}
                 weaponDetails={WEAPON_DETAILS}
@@ -260,24 +290,26 @@ const FramedGame = () => {
             </div>
           )}
 
-          {/* Right: Clues & Actions */}
-          <div className="space-y-4">
-            <ActionPanel
-              selectedAction={state.selectedAction}
-              onActionChange={actions.setSelectedAction}
-              interrogationsLeft={state.interrogationsLeft}
-              hasForensicsKit={state.hasForensicsKit}
-              forensicsUsesLeft={state.forensicsUsesLeft}
-              hasMasterKey={state.hasMasterKey}
-              blockedRoomsCount={state.blockedRooms.length}
-              gameOver={gameOver}
-            />
+          {/* Action & Evidence Panels - Show on desktop or when not in specialized view on mobile */}
+          {(!isMobile || (activeTab === 'map' || activeTab === 'search')) && (
+            <div className="space-y-4">
+              <ActionPanel
+                selectedAction={state.selectedAction}
+                onActionChange={actions.setSelectedAction}
+                interrogationsLeft={state.interrogationsLeft}
+                hasForensicsKit={state.hasForensicsKit}
+                forensicsUsesLeft={state.forensicsUsesLeft}
+                hasMasterKey={state.hasMasterKey}
+                blockedRoomsCount={state.blockedRooms.length}
+                gameOver={gameOver}
+              />
 
-            <EvidencePanel
-              clues={state.playerClues}
-              onShowEvents={() => setShowEventsModal(true)}
-            />
-          </div>
+              <EvidencePanel
+                clues={state.playerClues}
+                onShowEvents={() => setShowEventsModal(true)}
+              />
+            </div>
+          )}
         </div>
 
         {/* Modals */}
@@ -363,6 +395,15 @@ const FramedGame = () => {
           />
         )}
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      {showBottomNav && (
+        <MobileNav
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          disabled={gameOver}
+        />
+      )}
     </div>
   )
 }

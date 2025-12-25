@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Users, Check, X, Minus, MessageSquare } from 'lucide-react'
 import { WITNESS_RELIABILITY, WITNESS_CATEGORIES } from '../../data/witnesses'
 import { summarizeWitnessTestimony } from '../../utils/witnessGenerator'
+import ResponsiveModal from '../responsive/ResponsiveModal'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const ReliabilityBadge = ({ reliability }) => {
   const config = WITNESS_RELIABILITY[reliability]
@@ -99,86 +101,78 @@ const SuspectSummaryCard = ({ suspect, statements, isSelected, onClick }) => {
 const WitnessModal = ({ witnesses, suspects, onClose }) => {
   const [selectedSuspect, setSelectedSuspect] = useState(suspects[0])
   const statements = witnesses[selectedSuspect] || []
+  const isMobile = useIsMobile()
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 border-4 border-amber-600 rounded-lg p-6 max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-3xl font-bold text-amber-400 flex items-center gap-3">
-              <Users className="w-8 h-8" />
-              WITNESS STATEMENTS
-            </h2>
-            <p className="text-sm text-gray-400 mt-1">
-              Testimony collected from staff and guests about each suspect.
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-bold"
-          >
-            Close
-          </button>
-        </div>
+    <ResponsiveModal
+      isOpen={true}
+      onClose={onClose}
+      title="WITNESS STATEMENTS"
+      size="full"
+      borderColor="border-amber-600"
+    >
+      <p className="text-sm text-gray-400 mb-4">
+        Testimony collected from staff and guests about each suspect.
+      </p>
 
-        <div className="grid grid-cols-4 gap-4">
-          {/* Suspect List */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-bold text-gray-400 mb-2">SUSPECTS</h3>
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-4'}`}>
+        {/* Suspect List - Horizontal on mobile */}
+        <div className={isMobile ? 'order-first' : ''}>
+          <h3 className="text-sm font-bold text-gray-400 mb-2">SUSPECTS</h3>
+          <div className={`${isMobile ? 'flex gap-2 overflow-x-auto hide-scrollbar pb-2' : 'space-y-2'}`}>
             {suspects.map(suspect => (
-              <SuspectSummaryCard
-                key={suspect}
-                suspect={suspect}
-                statements={witnesses[suspect] || []}
-                isSelected={selectedSuspect === suspect}
-                onClick={() => setSelectedSuspect(suspect)}
-              />
+              <div key={suspect} className={isMobile ? 'flex-shrink-0 w-40' : ''}>
+                <SuspectSummaryCard
+                  suspect={suspect}
+                  statements={witnesses[suspect] || []}
+                  isSelected={selectedSuspect === suspect}
+                  onClick={() => setSelectedSuspect(suspect)}
+                />
+              </div>
             ))}
           </div>
+        </div>
 
-          {/* Statements Detail */}
-          <div className="col-span-3">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white">
-                Statements About {selectedSuspect}
-              </h3>
+        {/* Statements Detail */}
+        <div className={isMobile ? '' : 'col-span-3'}>
+          <h3 className="text-lg font-bold text-white mb-4">
+            Statements About {selectedSuspect}
+          </h3>
+
+          {statements.length === 0 ? (
+            <p className="text-gray-400 italic">No witness statements collected yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {statements.map((statement, idx) => (
+                <StatementCard key={idx} statement={statement} />
+              ))}
             </div>
+          )}
 
-            {statements.length === 0 ? (
-              <p className="text-gray-400 italic">No witness statements collected yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {statements.map((statement, idx) => (
-                  <StatementCard key={idx} statement={statement} />
-                ))}
+          {/* Legend */}
+          <div className="mt-6 p-4 bg-gray-900 rounded-lg">
+            <h4 className="text-sm font-bold text-gray-400 mb-2">INTERPRETATION GUIDE</h4>
+            <div className={`grid gap-3 text-xs ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-500" />
+                <span className="text-gray-300">Corroborates alibi</span>
               </div>
-            )}
-
-            {/* Legend */}
-            <div className="mt-6 p-4 bg-gray-900 rounded-lg">
-              <h4 className="text-sm font-bold text-gray-400 mb-2">INTERPRETATION GUIDE</h4>
-              <div className="grid grid-cols-3 gap-4 text-xs">
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500" />
-                  <span className="text-gray-300">Corroborates alibi</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <X className="w-4 h-4 text-red-500" />
-                  <span className="text-gray-300">Contradicts alibi</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Minus className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-300">Neutral/unclear</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <X className="w-4 h-4 text-red-500" />
+                <span className="text-gray-300">Contradicts alibi</span>
               </div>
-              <p className="text-xs text-gray-500 mt-3">
-                Note: Family members may be biased. Staff are generally more reliable witnesses.
-              </p>
+              <div className="flex items-center gap-2">
+                <Minus className="w-4 h-4 text-gray-500" />
+                <span className="text-gray-300">Neutral/unclear</span>
+              </div>
             </div>
+            <p className="text-xs text-gray-500 mt-3">
+              Note: Family may be biased. Staff are generally more reliable.
+            </p>
           </div>
         </div>
       </div>
-    </div>
+    </ResponsiveModal>
   )
 }
 

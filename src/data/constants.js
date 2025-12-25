@@ -1,3 +1,17 @@
+// Responsive breakpoints
+export const BREAKPOINTS = {
+  MOBILE: 768,    // < 768px = mobile
+  TABLET: 1024,   // 768-1023px = tablet
+  DESKTOP: 1024   // >= 1024px = desktop
+}
+
+// Touch target sizes (accessibility)
+export const TOUCH_TARGETS = {
+  MINIMUM: 44,    // px - absolute minimum
+  RECOMMENDED: 48, // px - preferred
+  SPACING: 8      // px - minimum between targets
+}
+
 // Game configuration (defaults for NORMAL difficulty)
 export const MAX_TURNS = 15
 export const MAX_INTERROGATIONS = 3

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Banknote, Check, X, Minus, User } from 'lucide-react'
 import { MOTIVE_STRENGTH_CONFIG } from '../../data/constants'
 import { TRAIT_CATEGORIES } from '../../data/physicalTraits'
+import ResponsiveModal from '../responsive/ResponsiveModal'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const MotiveIndicator = ({ strength }) => {
   const config = MOTIVE_STRENGTH_CONFIG[strength]
@@ -148,88 +150,83 @@ const PhysicalTraitsSection = ({ profile, discoveredTraits }) => {
 const DossierModal = ({ suspects, suspectProfiles, discoveredTraits = {}, onClose, onShowRelationships }) => {
   const [selectedSuspect, setSelectedSuspect] = useState(suspects[0])
   const profile = suspectProfiles[selectedSuspect]
+  const isMobile = useIsMobile()
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 border-4 border-blue-600 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-3xl font-bold text-blue-400">SUSPECT DOSSIERS</h2>
+    <ResponsiveModal
+      isOpen={true}
+      onClose={onClose}
+      title="SUSPECT DOSSIERS"
+      size="xl"
+      borderColor="border-blue-600"
+    >
+      {/* Suspect Tabs - Scrollable on mobile */}
+      <div className="flex gap-2 mb-6 overflow-x-auto hide-scrollbar pb-2 -mx-2 px-2">
+        {suspects.map(suspect => (
           <button
-            onClick={onClose}
-            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-bold"
+            key={suspect}
+            onClick={() => setSelectedSuspect(suspect)}
+            className={`px-4 py-3 md:py-2 rounded-lg font-bold whitespace-nowrap touch-active ${
+              selectedSuspect === suspect
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-400'
+            }`}
           >
-            Close
+            {isMobile ? suspect.split(' ')[1] || suspect : suspect}
+          </button>
+        ))}
+      </div>
+
+      {/* Detailed Profile */}
+      <div className="bg-gray-700 rounded-lg p-4 md:p-6 space-y-4">
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'justify-between items-start'}`}>
+          <div>
+            <h3 className="text-xl md:text-2xl font-bold text-white">{selectedSuspect}</h3>
+            <p className="text-gray-400 text-sm">{profile.occupation} - Age {profile.age}</p>
+          </div>
+          <div className={isMobile ? '' : 'text-right'}>
+            <div className="text-sm text-gray-400">Current Location</div>
+            <div className="text-lg font-bold text-yellow-400">{profile.location}</div>
+          </div>
+        </div>
+
+        <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          <div>
+            <div className="text-sm font-bold text-blue-400 mb-1">BACKGROUND</div>
+            <div className="text-sm text-gray-300">{profile.background}</div>
+          </div>
+          <div>
+            <div className="text-sm font-bold text-purple-400 mb-1">PERSONALITY</div>
+            <div className="text-sm text-gray-300">{profile.personality}</div>
+          </div>
+        </div>
+
+        {/* Motive Section */}
+        <MotiveSection profile={profile} />
+
+        {/* Physical Traits Section */}
+        <PhysicalTraitsSection profile={profile} discoveredTraits={discoveredTraits} />
+
+        <div>
+          <div className="text-sm font-bold text-green-400 mb-2">KNOWN RELATIONSHIPS</div>
+          <div className="text-sm text-gray-400 italic mb-2">
+            Understanding connections between suspects is key to uncovering conspiracies...
+          </div>
+          <button
+            onClick={onShowRelationships}
+            className="bg-green-600 hover:bg-green-700 px-4 py-3 md:py-2 rounded-lg text-sm font-bold w-full md:w-auto touch-active"
+          >
+            View Full Relationship Network
           </button>
         </div>
 
-        {/* Suspect Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto">
-          {suspects.map(suspect => (
-            <button
-              key={suspect}
-              onClick={() => setSelectedSuspect(suspect)}
-              className={`px-4 py-2 rounded-lg font-bold whitespace-nowrap ${
-                selectedSuspect === suspect
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-              }`}
-            >
-              {suspect}
-            </button>
-          ))}
-        </div>
-
-        {/* Detailed Profile */}
-        <div className="bg-gray-700 rounded-lg p-6 space-y-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-2xl font-bold text-white">{selectedSuspect}</h3>
-              <p className="text-gray-400 text-sm">{profile.occupation} - Age {profile.age}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-400">Current Location</div>
-              <div className="text-lg font-bold text-yellow-400">{profile.location}</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-sm font-bold text-blue-400 mb-1">BACKGROUND</div>
-              <div className="text-sm text-gray-300">{profile.background}</div>
-            </div>
-            <div>
-              <div className="text-sm font-bold text-purple-400 mb-1">PERSONALITY</div>
-              <div className="text-sm text-gray-300">{profile.personality}</div>
-            </div>
-          </div>
-
-          {/* Motive Section */}
-          <MotiveSection profile={profile} />
-
-          {/* Physical Traits Section */}
-          <PhysicalTraitsSection profile={profile} discoveredTraits={discoveredTraits} />
-
-          <div>
-            <div className="text-sm font-bold text-green-400 mb-2">KNOWN RELATIONSHIPS</div>
-            <div className="text-sm text-gray-400 italic mb-2">
-              Understanding connections between suspects is key to uncovering conspiracies...
-            </div>
-            <button
-              onClick={onShowRelationships}
-              className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-bold"
-            >
-              View Full Relationship Network
-            </button>
-          </div>
-
-          <div className="mt-4 bg-gray-800 border-2 border-yellow-600 rounded p-3">
-            <div className="text-sm text-yellow-400">
-              <strong>Interrogate this suspect</strong> to learn about their alibi and hear their side of the story.
-            </div>
+        <div className="mt-4 bg-gray-800 border-2 border-yellow-600 rounded p-3">
+          <div className="text-sm text-yellow-400">
+            <strong>Interrogate this suspect</strong> to learn about their alibi and hear their side of the story.
           </div>
         </div>
       </div>
-    </div>
+    </ResponsiveModal>
   )
 }
 

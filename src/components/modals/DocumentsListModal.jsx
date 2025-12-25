@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FileText, Mail, BookOpen, StickyNote, Send, FolderOpen, Eye } from 'lucide-react'
 import { DOCUMENT_TYPES } from '../../data/documents'
 import DocumentModal from './DocumentModal'
+import ResponsiveModal from '../responsive/ResponsiveModal'
 
 const TYPE_ICONS = {
   [DOCUMENT_TYPES.LETTER]: Mail,
@@ -65,53 +66,41 @@ const DocumentsListModal = ({ documents, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 border-4 border-yellow-600 rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-3xl font-bold text-yellow-400 flex items-center gap-3">
-              <FolderOpen className="w-8 h-8" />
-              FOUND DOCUMENTS
-            </h2>
-            <p className="text-sm text-gray-400 mt-1">
-              {documents.length} document{documents.length !== 1 ? 's' : ''} discovered
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-bold"
-          >
-            Close
-          </button>
-        </div>
+    <ResponsiveModal
+      isOpen={true}
+      onClose={onClose}
+      title="FOUND DOCUMENTS"
+      size="lg"
+      borderColor="border-yellow-600"
+    >
+      <p className="text-sm text-gray-400 mb-4">
+        {documents.length} document{documents.length !== 1 ? 's' : ''} discovered
+      </p>
 
-        <div className="flex-1 overflow-y-auto">
-          {documents.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No documents found yet.</p>
-              <p className="text-sm mt-2">Search rooms to discover letters, diaries, and other documents.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {documents.map((doc, index) => (
-                <DocumentCard
-                  key={index}
-                  document={doc}
-                  onClick={() => setSelectedDocument(doc)}
-                />
-              ))}
-            </div>
-          )}
+      {documents.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">
+          <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p>No documents found yet.</p>
+          <p className="text-sm mt-2">Search rooms to discover letters, diaries, and other documents.</p>
         </div>
+      ) : (
+        <div className="space-y-3">
+          {documents.map((doc, index) => (
+            <DocumentCard
+              key={index}
+              document={doc}
+              onClick={() => setSelectedDocument(doc)}
+            />
+          ))}
+        </div>
+      )}
 
-        {documents.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-700 text-xs text-gray-500">
-            Click on a document to read its full contents.
-          </div>
-        )}
-      </div>
-    </div>
+      {documents.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-gray-700 text-xs text-gray-500">
+          Tap on a document to read its full contents.
+        </div>
+      )}
+    </ResponsiveModal>
   )
 }
 
