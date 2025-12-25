@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Siren, Clock, MessageSquare, Microscope, Users } from 'lucide-react'
 import { DIFFICULTY, DIFFICULTY_CONFIG } from '../data/constants'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const DifficultyCard = ({ difficulty, config, isSelected, onSelect }) => {
   return (
@@ -45,34 +46,35 @@ const DifficultyCard = ({ difficulty, config, isSelected, onSelect }) => {
 
 const StartScreen = ({ onStart }) => {
   const [selectedDifficulty, setSelectedDifficulty] = useState(DIFFICULTY.NORMAL)
+  const isMobile = useIsMobile()
 
   const handleStart = () => {
     onStart(selectedDifficulty)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-red-900 to-black text-gray-100 p-8 flex items-center justify-center">
-      <div className="max-w-3xl bg-gray-800 border-4 border-red-600 rounded-lg p-8">
-        <div className="text-center mb-8">
-          <Siren className="w-16 h-16 mx-auto mb-4 text-red-500 animate-pulse" />
-          <h1 className="text-5xl font-bold text-red-400 mb-2">FRAMED</h1>
-          <p className="text-xl text-gray-300">A Murder at Ravencrest Manor</p>
+    <div className={`min-h-screen bg-gradient-to-br from-gray-900 via-red-900 to-black text-gray-100 ${isMobile ? 'p-4' : 'p-8'} flex items-center justify-center`}>
+      <div className={`max-w-3xl w-full bg-gray-800 border-4 border-red-600 rounded-lg ${isMobile ? 'p-4' : 'p-8'}`}>
+        <div className="text-center mb-6 md:mb-8">
+          <Siren className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} mx-auto mb-3 md:mb-4 text-red-500 animate-pulse`} />
+          <h1 className={`${isMobile ? 'text-3xl' : 'text-5xl'} font-bold text-red-400 mb-2`}>FRAMED</h1>
+          <p className={`${isMobile ? 'text-base' : 'text-xl'} text-gray-300`}>A Murder at Ravencrest Manor</p>
         </div>
 
-        <div className="bg-gray-700 rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-bold mb-4 text-blue-400">THE STORY</h2>
-          <p className="text-gray-300 mb-4">
+        <div className={`bg-gray-700 rounded-lg ${isMobile ? 'p-4' : 'p-6'} mb-4 md:mb-6`}>
+          <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold mb-3 md:mb-4 text-blue-400`}>THE STORY</h2>
+          <p className="text-gray-300 mb-3 md:mb-4 text-sm md:text-base">
             A prestigious guest has been murdered at Ravencrest Manor. Five suspects remain, each with secrets, motives, and connections.
-            You are a private detective—but so is your rival. Race to solve the murder before they do, or before the police arrive.
+            You are a private detective—but so is your rival. Race to solve the murder before they do!
           </p>
-          <p className="text-yellow-400 font-bold">
+          <p className="text-yellow-400 font-bold text-sm md:text-base">
             TWIST: Sometimes killers work in pairs. Uncover conspiracies by studying relationships!
           </p>
         </div>
 
-        <div className="bg-gray-700 rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-bold mb-4 text-orange-400">SELECT DIFFICULTY</h2>
-          <div className="grid grid-cols-3 gap-4">
+        <div className={`bg-gray-700 rounded-lg ${isMobile ? 'p-4' : 'p-6'} mb-4 md:mb-6`}>
+          <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold mb-3 md:mb-4 text-orange-400`}>SELECT DIFFICULTY</h2>
+          <div className={`grid gap-3 md:gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
             {Object.entries(DIFFICULTY_CONFIG).map(([key, config]) => (
               <DifficultyCard
                 key={key}
@@ -85,9 +87,9 @@ const StartScreen = ({ onStart }) => {
           </div>
         </div>
 
-        <div className="bg-gray-700 rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-bold mb-4 text-purple-400">SUSPECTS</h2>
-          <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">
+        <div className={`bg-gray-700 rounded-lg ${isMobile ? 'p-4' : 'p-6'} mb-4 md:mb-6`}>
+          <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold mb-3 md:mb-4 text-purple-400`}>SUSPECTS</h2>
+          <div className={`grid gap-2 text-sm text-gray-300 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
             <div>Lady Blackwood (Botanist)</div>
             <div>Colonel Ashford (Retired Officer)</div>
             <div>Dr. Sterling (Physician)</div>
@@ -98,7 +100,7 @@ const StartScreen = ({ onStart }) => {
 
         <button
           onClick={handleStart}
-          className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white py-4 rounded-lg font-bold text-xl shadow-lg transform hover:scale-105 transition-all"
+          className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white py-4 rounded-lg font-bold text-lg md:text-xl shadow-lg transform hover:scale-105 transition-all touch-active"
         >
           BEGIN INVESTIGATION
         </button>
