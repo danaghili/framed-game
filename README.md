@@ -1,16 +1,63 @@
-# React + Vite
+# FRAMED - Victorian Murder Mystery Detective Game
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A turn-based detective game where you investigate a murder at Ravencrest Manor. Race against an AI opponent to solve the case before time runs out!
 
-Currently, two official plugins are available:
+**[Play Now](https://framed-game.netlify.app)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## The Story
 
-## React Compiler
+A prestigious guest has been murdered at Ravencrest Manor. Five suspects remain, each with secrets, motives, and connections. You are a private detective—but so is your rival. Race to solve the murder before they do, or before the police arrive.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Twist:** Sometimes killers work in pairs. Uncover conspiracies by studying relationships!
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **5 Unique Suspects** - Each with backgrounds, motives, alibis, and physical traits
+- **15 Weapons** - With forensic analysis to match evidence
+- **12 Rooms** - Explore the manor to find evidence
+- **Conspiracy Mode** - 30% chance of two killers working together
+- **AI Opponent** - Races to solve the case before you
+- **Evidence Systems:**
+  - Timeline & alibi verification
+  - Witness statements with reliability ratings
+  - Document/letter discovery
+  - Evidence chains with prerequisite unlocking
+  - Physical trait matching
+- **Deduction Board** - Track your theories
+- **Random Events** - Unexpected twists during investigation
+- **3 Difficulty Levels** - Easy, Normal, Hard
+
+## How to Play
+
+1. **Search Rooms** - Click on rooms to find evidence
+2. **Interrogate Suspects** - Question them about their alibis (limited uses)
+3. **Examine Weapons** - Use forensics kit to analyze weapons (requires finding the kit first)
+4. **Study Relationships** - Look for conspiracy-compatible connections
+5. **Make Your Accusation** - Name the killer(s), weapon, and room
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run linting
+npm run lint
+```
+
+## Tech Stack
+
+- React 18
+- Vite
+- Tailwind CSS
+- Lucide React Icons
+
+## License
+
+MIT
