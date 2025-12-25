@@ -53,7 +53,7 @@ const RelationshipsModal = ({ suspects, relationships, discoveredRelationships =
             <div key={suspect} className="bg-gray-700 rounded-lg p-4">
               <h3 className="text-lg font-bold text-white mb-3">{suspect}</h3>
               <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                {Object.entries(suspectRelationships).map(([otherSuspect, relationshipType]) => {
+                {Object.entries(suspectRelationships).map(([otherSuspect, _relationshipType]) => {
                   const discovered = isDiscovered(suspect, otherSuspect)
                   const discoveredType = discovered ? getDiscoveredType(suspect, otherSuspect) : null
                   const relType = discovered ? relationshipTypes[discoveredType] : null

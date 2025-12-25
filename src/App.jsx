@@ -6,6 +6,7 @@ import { useOpponentAI } from './hooks/useOpponentAI'
 import { useDeductionBoard } from './hooks/useDeductionBoard'
 import { useIsMobile } from './hooks/useIsMobile'
 import { useToast } from './hooks/useToast'
+import { useTutorial } from './hooks/useTutorial'
 
 // Mobile Components
 import MobileNav from './components/mobile/MobileNav'
@@ -42,6 +43,10 @@ import EvidenceJournalModal from './components/modals/EvidenceJournalModal'
 import MoreMenuModal from './components/modals/MoreMenuModal'
 import RoomActionModal from './components/modals/RoomActionModal'
 
+// Tutorial
+import TutorialOverlay from './components/tutorial/TutorialOverlay'
+import TutorialModal from './components/tutorial/TutorialModal'
+
 // Error Boundary
 class ErrorBoundary extends Component {
   state = { hasError: false }
@@ -76,6 +81,7 @@ const FramedGame = () => {
   const { state: deductionState, actions: deductionActions, summary: deductionSummary } = useDeductionBoard()
   const isMobile = useIsMobile()
   const { toasts, removeToast, addToast } = useToast()
+  const tutorial = useTutorial()
 
   // Mobile navigation state
   const [activeTab, setActiveTab] = useState('search')
@@ -171,6 +177,13 @@ const FramedGame = () => {
       hasMasterKey: state.hasMasterKey
     }
   }, [state.playerClues, state.foundDocuments, state.hasForensicsKit, state.hasMasterKey, state.playerPosition, addToast])
+
+  // Trigger tutorial on first game start
+  useEffect(() => {
+    if (state.phase === GAME_PHASE.PLAYING && !tutorial.hasCompletedTour()) {
+      tutorial.startTour()
+    }
+  }, [state.phase])
 
   // Handle opponent moves after player actions
   const handleOpponentMove = () => {
@@ -283,6 +296,7 @@ const FramedGame = () => {
           turn={state.turn}
           playerClues={state.playerClues.length}
           opponentClues={state.opponentClues.length}
+          onHelpClick={tutorial.openHowToPlay}
         />
 
         {/* Game Over Screen */}
@@ -303,10 +317,11 @@ const FramedGame = () => {
                 <button
                   onClick={() => setShowAccuseModal(true)}
                   className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg transition-all"
+                  data-tour="accuse-button"
                 >
                   MAKE ACCUSATION
                 </button>
-                <div className="flex gap-2">
+                <div className="flex gap-2" data-tour="action-buttons">
                   <button
                     onClick={() => setShowDossier(true)}
                     className="bg-gray-700 hover:bg-gray-600 text-gray-200 px-4 py-2 rounded-lg text-sm font-bold"
@@ -343,6 +358,7 @@ const FramedGame = () => {
 
             {/* Desktop Main Grid - 3 columns: Deduction | Map | Evidence */}
             <div className="grid grid-cols-3 gap-4">
+              <div data-tour="deduction-board">
               <InlineDeductionBoard
                 suspects={SUSPECTS}
                 weapons={WEAPONS}
@@ -359,7 +375,9 @@ const FramedGame = () => {
                 examinedWeapons={state.examinedWeapons}
                 gameOver={gameOver}
               />
+              </div>
 
+              <div data-tour="floorplan">
               <FloorplanMap
                 playerPosition={state.playerPosition}
                 opponentPosition={state.opponentPosition}
@@ -368,11 +386,14 @@ const FramedGame = () => {
                 gameOver={gameOver}
                 onRoomClick={handleRoomClick}
               />
+              </div>
 
+              <div data-tour="evidence-panel">
               <InlineEvidencePanel
                 clues={state.playerClues}
                 documents={state.foundDocuments || []}
               />
+              </div>
             </div>
           </>
         )}
@@ -512,6 +533,26 @@ const FramedGame = () => {
           onTabChange={handleTabChange}
           disabled={gameOver}
           badges={{ evidence: evidenceBadgeCount }}
+        />
+      )}
+
+      {/* Tutorial System */}
+      {tutorial.isTourActive && (
+        <TutorialOverlay
+          currentStep={tutorial.currentStep}
+          onNext={tutorial.nextStep}
+          onPrev={tutorial.prevStep}
+          onSkip={tutorial.completeTour}
+        />
+      )}
+
+      {tutorial.showHowToPlay && (
+        <TutorialModal
+          onClose={tutorial.closeHowToPlay}
+          onStartTour={() => {
+            tutorial.closeHowToPlay()
+            tutorial.startTour()
+          }}
         />
       )}
     </div>

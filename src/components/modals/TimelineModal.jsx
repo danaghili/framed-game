@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Clock, AlertTriangle, Check, HelpCircle, Lock, UserCheck } from 'lucide-react'
 import { ALIBI_STRENGTH_CONFIG, MURDER_TIME, TIME_SLOTS } from '../../data/timeline'
-import { getAlibiSummary } from '../../utils/timelineGenerator'
 import ResponsiveModal from '../responsive/ResponsiveModal'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
@@ -116,7 +115,7 @@ const ProgressDots = ({ discovered, total }) => {
   )
 }
 
-const SuspectSummary = ({ suspect, timeline, discoveredSlots, isSelected, onClick }) => {
+const SuspectSummary = ({ suspect, timeline: _timeline, discoveredSlots, isSelected, onClick }) => {
   const discoveredCount = discoveredSlots.length
   const totalSlots = 5
   const isFullyInterrogated = discoveredCount === totalSlots

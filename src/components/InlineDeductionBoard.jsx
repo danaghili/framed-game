@@ -122,6 +122,7 @@ const InlineDeductionBoard = ({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
+              data-tour={tab.id === 'suspects' ? 'suspects-tab' : undefined}
               className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 text-xs font-bold border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? `${tab.border} ${tab.color}`
