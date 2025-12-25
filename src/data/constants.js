@@ -34,6 +34,7 @@ export const DIFFICULTY_CONFIG = {
     turns: 20,
     interrogations: 5,
     forensicsUses: 7,
+    staffInterviews: 4,
     conspiracyChance: 0.15,
     color: '#22c55e'
   },
@@ -43,6 +44,7 @@ export const DIFFICULTY_CONFIG = {
     turns: 15,
     interrogations: 3,
     forensicsUses: 5,
+    staffInterviews: 3,
     conspiracyChance: 0.30,
     color: '#eab308'
   },
@@ -52,6 +54,7 @@ export const DIFFICULTY_CONFIG = {
     turns: 12,
     interrogations: 2,
     forensicsUses: 3,
+    staffInterviews: 2,
     conspiracyChance: 0.50,
     color: '#ef4444'
   }
@@ -73,7 +76,9 @@ export const GAME_ACTIONS = {
   BLOCK_ROOM: 'BLOCK_ROOM',
   MAKE_ACCUSATION: 'MAKE_ACCUSATION',
   END_TURN: 'END_TURN',
-  OPPONENT_MOVE: 'OPPONENT_MOVE'
+  OPPONENT_MOVE: 'OPPONENT_MOVE',
+  INTERVIEW_STAFF: 'INTERVIEW_STAFF',
+  SET_SELECTED_ACTION: 'SET_SELECTED_ACTION'
 }
 
 // Evidence categories

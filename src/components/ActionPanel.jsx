@@ -1,7 +1,6 @@
 const ActionPanel = ({
   selectedAction,
   onActionChange,
-  interrogationsLeft,
   hasForensicsKit,
   forensicsUsesLeft,
   hasMasterKey,
@@ -9,7 +8,7 @@ const ActionPanel = ({
   gameOver
 }) => {
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-3 gap-2">
       <button
         onClick={() => onActionChange('search')}
         disabled={gameOver}
@@ -19,18 +18,7 @@ const ActionPanel = ({
             : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
         } ${gameOver ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        SEARCH ROOM
-      </button>
-      <button
-        onClick={() => onActionChange('interrogate')}
-        disabled={gameOver || interrogationsLeft <= 0}
-        className={`py-3 rounded-lg font-bold text-sm ${
-          selectedAction === 'interrogate'
-            ? 'bg-green-600 text-white'
-            : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-        } ${(gameOver || interrogationsLeft <= 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
-      >
-        INTERROGATE {interrogationsLeft > 0 && `(${interrogationsLeft})`}
+        SEARCH
       </button>
       <button
         onClick={() => onActionChange('examine')}

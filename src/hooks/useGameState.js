@@ -9,7 +9,7 @@ import { generateDocuments, getDocumentSummary } from '../utils/documentGenerato
 import { generateEvidenceChains, checkChainProgress } from '../utils/evidenceChainManager'
 import { checkForRandomEvent, applyEventEffect } from '../utils/eventManager'
 import { GAME_ACTIONS, GAME_PHASE, MAX_TURNS, MAX_INTERROGATIONS, MAX_FORENSICS_USES, DIFFICULTY, DIFFICULTY_CONFIG } from '../data/constants'
-import { SUSPECT_PROFILES } from '../data/suspects'
+import { SUSPECTS, SUSPECT_PROFILES } from '../data/suspects'
 import { WEAPON_DETAILS } from '../data/weapons'
 
 const initialState = {
@@ -38,7 +38,12 @@ const initialState = {
   hasMasterKey: false,
   winner: null,
   selectedAction: 'search',
-  discoveredTraits: {}
+  discoveredTraits: {},
+  // Progressive discovery state
+  discoveredRelationships: {},
+  discoveredWitnesses: {},
+  discoveredTimeline: {},
+  staffInterviewsLeft: 3
 }
 
 function gameReducer(state, action) {
@@ -53,6 +58,23 @@ function gameReducer(state, action) {
       const witnesses = generateWitnessStatements(solution)
       const documents = generateDocuments(solution)
       const evidenceChains = generateEvidenceChains(solution)
+
+      // Seed 1-2 initial relationships for "basic awareness"
+      const initialDiscoveredRelationships = {}
+      const allPairs = []
+      for (let i = 0; i < SUSPECTS.length; i++) {
+        for (let j = i + 1; j < SUSPECTS.length; j++) {
+          allPairs.push([SUSPECTS[i], SUSPECTS[j]])
+        }
+      }
+      // Shuffle and pick 2
+      const shuffled = [...allPairs].sort(() => Math.random() - 0.5)
+      for (let i = 0; i < 2 && i < shuffled.length; i++) {
+        const [a, b] = shuffled[i]
+        const key = [a, b].sort().join('-')
+        initialDiscoveredRelationships[key] = relationships[a][b]
+      }
+
       return {
         ...initialState,
         phase: GAME_PHASE.PLAYING,
@@ -61,6 +83,7 @@ function gameReducer(state, action) {
         interrogationsLeft: config.interrogations,
         forensicsUsesLeft: 0,
         maxForensicsUses: config.forensicsUses,
+        staffInterviewsLeft: config.staffInterviews,
         relationships,
         solution,
         evidence,
@@ -68,6 +91,9 @@ function gameReducer(state, action) {
         witnesses,
         documents,
         evidenceChains,
+        discoveredRelationships: initialDiscoveredRelationships,
+        discoveredWitnesses: {},
+        discoveredTimeline: {},
         gameLog: [
           `Difficulty: ${config.label} - ${config.turns} turns, ${config.interrogations} interrogations`,
           'Your opponent is also investigating. Move fast!',
@@ -143,6 +169,63 @@ function gameReducer(state, action) {
         newState.foundDocuments = [...(state.foundDocuments || []), doc]
         newState.playerClues = [...(newState.playerClues || state.playerClues), getDocumentSummary(doc)]
         logs.push(`Found a document: ${doc.title}!`)
+
+        // PROGRESSIVE DISCOVERY: Documents can reveal relationships
+        if (doc.from && doc.to && state.relationships[doc.from]?.[doc.to]) {
+          const relType = state.relationships[doc.from][doc.to]
+          const key = [doc.from, doc.to].sort().join('-')
+          if (!newState.discoveredRelationships?.[key] && !state.discoveredRelationships[key]) {
+            newState.discoveredRelationships = {
+              ...(newState.discoveredRelationships || state.discoveredRelationships),
+              [key]: relType
+            }
+            logs.push(`Document reveals connection between ${doc.from} and ${doc.to}!`)
+          }
+        }
+      }
+
+      // PROGRESSIVE DISCOVERY: Gossip rooms reveal witness statements
+      const GOSSIP_ROOMS = ['Servant Quarters', 'Kitchen']
+      if (GOSSIP_ROOMS.includes(room) && Math.random() < 0.7) {
+        const randomSuspect = SUSPECTS[Math.floor(Math.random() * SUSPECTS.length)]
+        const allStatements = state.witnesses[randomSuspect] || []
+        const discoveredStatements = newState.discoveredWitnesses?.[randomSuspect] || state.discoveredWitnesses[randomSuspect] || []
+        const discoveredSet = new Set(discoveredStatements.map(s => s.statement))
+        const undiscovered = allStatements.filter(s => !discoveredSet.has(s.statement))
+
+        if (undiscovered.length > 0) {
+          const gossip = undiscovered[Math.floor(Math.random() * undiscovered.length)]
+          newState.discoveredWitnesses = {
+            ...(newState.discoveredWitnesses || state.discoveredWitnesses),
+            [randomSuspect]: [...discoveredStatements, gossip]
+          }
+          newState.playerClues = [...(newState.playerClues || state.playerClues), `Overheard staff gossip about ${randomSuspect}: "${gossip.statement}"`]
+          logs.push(`Overheard servants gossiping about ${randomSuspect}...`)
+        }
+      }
+
+      // PROGRESSIVE DISCOVERY: Timeline rooms reveal timeline snippets
+      const TIMELINE_ROOMS = ['Study', 'Master Bedroom', 'Library']
+      if (TIMELINE_ROOMS.includes(room) && Math.random() < 0.6) {
+        const randomSuspect = SUSPECTS[Math.floor(Math.random() * SUSPECTS.length)]
+        const timeline = state.timelines[randomSuspect]
+        const discoveredSlots = newState.discoveredTimeline?.[randomSuspect] || state.discoveredTimeline[randomSuspect] || {}
+
+        if (timeline?.slots) {
+          const undiscoveredSlots = timeline.slots.filter(s => !discoveredSlots[s.slotId])
+          if (undiscoveredSlots.length > 0) {
+            const slot = undiscoveredSlots[Math.floor(Math.random() * undiscoveredSlots.length)]
+            newState.discoveredTimeline = {
+              ...(newState.discoveredTimeline || state.discoveredTimeline),
+              [randomSuspect]: {
+                ...discoveredSlots,
+                [slot.slotId]: slot
+              }
+            }
+            newState.playerClues = [...(newState.playerClues || state.playerClues), `Appointment book: ${randomSuspect} - ${slot.activity} at ${slot.timeLabel}`]
+            logs.push(`Found appointment book mentioning ${randomSuspect} at ${slot.timeLabel}.`)
+          }
+        }
       }
 
       // Check evidence chain progress for all new clues
@@ -216,6 +299,31 @@ function gameReducer(state, action) {
       const newTurn = state.turn - 1
       const logs = [`Interrogated ${suspect}! (${state.interrogationsLeft - 1} left)`]
 
+      // PROGRESSIVE DISCOVERY: Reveal full timeline for interrogated suspect
+      const suspectTimeline = state.timelines[suspect]
+      const newDiscoveredTimeline = {
+        ...state.discoveredTimeline,
+        [suspect]: suspectTimeline?.slots ?
+          Object.fromEntries(suspectTimeline.slots.map(slot => [slot.slotId, slot])) : {}
+      }
+      logs.push(`${suspect} revealed their full timeline.`)
+
+      // PROGRESSIVE DISCOVERY: 50% chance to reveal a relationship mention
+      let newDiscoveredRelationships = { ...state.discoveredRelationships }
+      if (state.relationships[suspect] && Math.random() < 0.5) {
+        const suspectRelations = Object.entries(state.relationships[suspect])
+        const undiscoveredRelations = suspectRelations.filter(([other]) => {
+          const key = [suspect, other].sort().join('-')
+          return !state.discoveredRelationships[key]
+        })
+        if (undiscoveredRelations.length > 0) {
+          const [otherSuspect, relType] = undiscoveredRelations[Math.floor(Math.random() * undiscoveredRelations.length)]
+          const key = [suspect, otherSuspect].sort().join('-')
+          newDiscoveredRelationships[key] = relType
+          logs.push(`${suspect} mentioned their connection with ${otherSuspect}.`)
+        }
+      }
+
       // Check evidence chain progress
       let updatedChains = state.evidenceChains
       if (state.evidenceChains) {
@@ -232,7 +340,9 @@ function gameReducer(state, action) {
         interrogationsLeft: state.interrogationsLeft - 1,
         playerClues: [...state.playerClues, testimony],
         evidenceChains: updatedChains,
-        gameLog: [...logs, ...state.gameLog].slice(0, 10),
+        discoveredTimeline: newDiscoveredTimeline,
+        discoveredRelationships: newDiscoveredRelationships,
+        gameLog: [...logs, ...state.gameLog].slice(0, 15),
         turn: newTurn,
         phase: newTurn <= 0 ? GAME_PHASE.GAME_OVER : state.phase,
         winner: newTurn <= 0 ? 'police' : null
@@ -395,10 +505,68 @@ function gameReducer(state, action) {
       }
     }
 
-    case 'SET_SELECTED_ACTION': {
+    case GAME_ACTIONS.SET_SELECTED_ACTION: {
       return {
         ...state,
         selectedAction: action.payload
+      }
+    }
+
+    case GAME_ACTIONS.INTERVIEW_STAFF: {
+      const { targetSuspect } = action.payload
+
+      if (state.staffInterviewsLeft <= 0) {
+        return {
+          ...state,
+          gameLog: ['No staff interviews remaining!', ...state.gameLog].slice(0, 15)
+        }
+      }
+
+      // Get undiscovered witness statements about this suspect
+      const allStatements = state.witnesses[targetSuspect] || []
+      const discoveredStatements = state.discoveredWitnesses[targetSuspect] || []
+      const discoveredSet = new Set(discoveredStatements.map(s => s.statement))
+      const undiscovered = allStatements.filter(s => !discoveredSet.has(s.statement))
+
+      const newTurn = state.turn - 1
+      const logs = []
+
+      if (undiscovered.length === 0) {
+        logs.push(`Staff had nothing new to say about ${targetSuspect}.`)
+        return {
+          ...state,
+          staffInterviewsLeft: state.staffInterviewsLeft - 1,
+          turn: newTurn,
+          gameLog: [...logs, ...state.gameLog].slice(0, 15),
+          phase: newTurn <= 0 ? GAME_PHASE.GAME_OVER : state.phase,
+          winner: newTurn <= 0 ? 'police' : null
+        }
+      }
+
+      // Reveal 1-2 random undiscovered statements
+      const shuffled = [...undiscovered].sort(() => Math.random() - 0.5)
+      const numToReveal = Math.min(shuffled.length, 1 + Math.floor(Math.random() * 2))
+      const revealed = shuffled.slice(0, numToReveal)
+
+      const newDiscoveredWitnesses = {
+        ...state.discoveredWitnesses,
+        [targetSuspect]: [...discoveredStatements, ...revealed]
+      }
+
+      // Add clues for each revealed statement
+      const newClues = revealed.map(r => `Staff testimony about ${targetSuspect}: "${r.statement}"`)
+
+      logs.push(`Interviewed staff about ${targetSuspect}. (${state.staffInterviewsLeft - 1} remaining)`)
+
+      return {
+        ...state,
+        discoveredWitnesses: newDiscoveredWitnesses,
+        staffInterviewsLeft: state.staffInterviewsLeft - 1,
+        playerClues: [...state.playerClues, ...newClues],
+        turn: newTurn,
+        gameLog: [...logs, ...state.gameLog].slice(0, 15),
+        phase: newTurn <= 0 ? GAME_PHASE.GAME_OVER : state.phase,
+        winner: newTurn <= 0 ? 'police' : null
       }
     }
 
@@ -421,7 +589,8 @@ export function useGameState() {
       payload: { suspect1, suspect2, weapon, room }
     }),
     opponentMove: (payload) => dispatch({ type: GAME_ACTIONS.OPPONENT_MOVE, payload }),
-    setSelectedAction: (action) => dispatch({ type: 'SET_SELECTED_ACTION', payload: action })
+    setSelectedAction: (actionName) => dispatch({ type: GAME_ACTIONS.SET_SELECTED_ACTION, payload: actionName }),
+    interviewStaff: (targetSuspect) => dispatch({ type: GAME_ACTIONS.INTERVIEW_STAFF, payload: { targetSuspect } })
   }), [])
 
   return { state, actions }

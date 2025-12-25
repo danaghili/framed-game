@@ -1,3 +1,5 @@
+import { useIsMobile } from '../hooks/useIsMobile'
+
 const RoomButton = ({
   room,
   isPlayerPosition,
@@ -39,6 +41,8 @@ const FloorplanMap = ({
   gameOver,
   onRoomClick
 }) => {
+  const isMobile = useIsMobile()
+
   const renderRoom = (room, style) => {
     const isPlayerPosition = room === playerPosition
     const isOpponentPosition = room === opponentPosition
@@ -61,7 +65,7 @@ const FloorplanMap = ({
   }
 
   return (
-    <div className="col-span-2 bg-gray-800 border-2 border-gray-600 rounded-lg p-4">
+    <div className="bg-gray-800 border-2 border-gray-600 rounded-lg p-4">
       <h2 className="text-xl font-bold mb-4 text-gray-300">Ravencrest Manor Floorplan</h2>
 
       {/* GROUND FLOOR */}
@@ -69,19 +73,19 @@ const FloorplanMap = ({
         <div className="text-xs font-bold text-gray-400 mb-3 flex items-center gap-2">
           <span className="text-green-400">*</span> GROUND FLOOR
         </div>
-        <div className="relative bg-gray-950 border border-gray-800 rounded" style={{ height: '260px' }}>
+        <div className="relative bg-gray-950 border border-gray-800 rounded" style={{ height: isMobile ? '200px' : '260px' }}>
           {/* Hallways/corridors background */}
           <div className="absolute inset-0 opacity-20">
             <div className="absolute top-1/2 left-0 right-0 h-12 bg-gray-700 transform -translate-y-1/2"></div>
             <div className="absolute left-1/2 top-0 bottom-0 w-12 bg-gray-700 transform -translate-x-1/2"></div>
           </div>
 
-          {renderRoom('Library', { top: '8%', left: '5%', width: '28%', height: '35%' })}
-          {renderRoom('Grand Hall', { top: '30%', left: '37%', width: '26%', height: '40%' })}
-          {renderRoom('Dining Room', { top: '8%', right: '5%', width: '30%', height: '35%' })}
-          {renderRoom('Billiard Room', { bottom: '8%', left: '5%', width: '25%', height: '30%' })}
-          {renderRoom('Kitchen', { bottom: '8%', left: '32%', width: '20%', height: '30%' })}
-          {renderRoom('Conservatory', { bottom: '8%', right: '5%', width: '28%', height: '30%' })}
+          {renderRoom('Library', { top: '5%', left: '5%', width: '28%', height: '38%' })}
+          {renderRoom('Grand Hall', { top: '5%', left: '36%', width: '28%', height: '50%' })}
+          {renderRoom('Dining Room', { top: '5%', right: '5%', width: '28%', height: '38%' })}
+          {renderRoom('Billiard Room', { bottom: '5%', left: '5%', width: '28%', height: '38%' })}
+          {renderRoom('Kitchen', { bottom: '5%', left: '36%', width: '28%', height: '38%' })}
+          {renderRoom('Conservatory', { bottom: '5%', right: '5%', width: '28%', height: '38%' })}
         </div>
       </div>
 
@@ -90,7 +94,7 @@ const FloorplanMap = ({
         <div className="text-xs font-bold text-gray-400 mb-3 flex items-center gap-2">
           <span className="text-blue-400">*</span> FIRST FLOOR
         </div>
-        <div className="relative bg-gray-950 border border-gray-800 rounded" style={{ height: '200px' }}>
+        <div className="relative bg-gray-950 border border-gray-800 rounded" style={{ height: isMobile ? '160px' : '200px' }}>
           {/* Horizontal hallway */}
           <div className="absolute inset-0 opacity-20">
             <div className="absolute top-1/2 left-0 right-0 h-12 bg-gray-700 transform -translate-y-1/2"></div>
@@ -109,7 +113,7 @@ const FloorplanMap = ({
           <div className="text-xs font-bold text-gray-400 mb-3 flex items-center gap-2">
             <span className="text-purple-400">*</span> BASEMENT
           </div>
-          <div className="relative bg-gray-950 border border-gray-800 rounded" style={{ height: '120px' }}>
+          <div className="relative bg-gray-950 border border-gray-800 rounded" style={{ height: isMobile ? '80px' : '120px' }}>
             <div className="absolute inset-0 flex items-center justify-center p-2">
               <RoomButton
                 room="Wine Cellar"
@@ -128,7 +132,7 @@ const FloorplanMap = ({
           <div className="text-xs font-bold text-gray-400 mb-3 flex items-center gap-2">
             <span className="text-yellow-400">*</span> ATTIC
           </div>
-          <div className="relative bg-gray-950 border border-gray-800 rounded" style={{ height: '120px' }}>
+          <div className="relative bg-gray-950 border border-gray-800 rounded" style={{ height: isMobile ? '80px' : '120px' }}>
             <div className="absolute inset-0 flex items-center justify-center p-2">
               <RoomButton
                 room="Servant Quarters"

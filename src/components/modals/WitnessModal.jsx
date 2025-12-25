@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Users, Check, X, Minus, MessageSquare } from 'lucide-react'
+import { Users, Check, X, Minus, MessageSquare, UserSearch } from 'lucide-react'
 import { WITNESS_RELIABILITY, WITNESS_CATEGORIES } from '../../data/witnesses'
 import { summarizeWitnessTestimony } from '../../utils/witnessGenerator'
 import ResponsiveModal from '../responsive/ResponsiveModal'
@@ -55,8 +55,9 @@ const StatementCard = ({ statement }) => {
   )
 }
 
-const SuspectSummaryCard = ({ suspect, statements, isSelected, onClick }) => {
-  const summary = summarizeWitnessTestimony(statements)
+const SuspectSummaryCard = ({ suspect, discoveredStatements, totalStatements, isSelected, onClick }) => {
+  const summary = summarizeWitnessTestimony(discoveredStatements)
+  const discoveredCount = discoveredStatements.length
 
   return (
     <button
@@ -69,39 +70,56 @@ const SuspectSummaryCard = ({ suspect, statements, isSelected, onClick }) => {
     >
       <div className="font-bold text-white text-sm mb-2">{suspect}</div>
 
-      <div className="flex gap-2 flex-wrap mb-1">
-        {summary.corroborating > 0 && (
-          <span className="text-xs px-1.5 py-0.5 rounded flex items-center gap-1" style={{ backgroundColor: '#22c55e20', color: '#22c55e' }}>
-            <Check className="w-3 h-3" />
-            {summary.corroborating}
-          </span>
-        )}
-        {summary.contradicting > 0 && (
-          <span className="text-xs px-1.5 py-0.5 rounded flex items-center gap-1" style={{ backgroundColor: '#ef444420', color: '#ef4444' }}>
-            <X className="w-3 h-3" />
-            {summary.contradicting}
-          </span>
-        )}
-        {summary.neutral > 0 && (
-          <span className="text-xs px-1.5 py-0.5 rounded flex items-center gap-1" style={{ backgroundColor: '#6b728020', color: '#9ca3af' }}>
-            <Minus className="w-3 h-3" />
-            {summary.neutral}
-          </span>
-        )}
-      </div>
+      {discoveredCount > 0 ? (
+        <>
+          <div className="flex gap-2 flex-wrap mb-1">
+            {summary.corroborating > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded flex items-center gap-1" style={{ backgroundColor: '#22c55e20', color: '#22c55e' }}>
+                <Check className="w-3 h-3" />
+                {summary.corroborating}
+              </span>
+            )}
+            {summary.contradicting > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded flex items-center gap-1" style={{ backgroundColor: '#ef444420', color: '#ef4444' }}>
+                <X className="w-3 h-3" />
+                {summary.contradicting}
+              </span>
+            )}
+            {summary.neutral > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded flex items-center gap-1" style={{ backgroundColor: '#6b728020', color: '#9ca3af' }}>
+                <Minus className="w-3 h-3" />
+                {summary.neutral}
+              </span>
+            )}
+          </div>
 
-      <div className="text-xs text-gray-400">
-        {summary.total} statement{summary.total !== 1 ? 's' : ''}
-        {summary.highReliability > 0 && ` (${summary.highReliability} reliable)`}
-      </div>
+          <div className="text-xs text-gray-400">
+            {discoveredCount}/{totalStatements} statements
+          </div>
+        </>
+      ) : (
+        <div className="text-xs text-gray-500 italic">
+          No statements yet
+        </div>
+      )}
     </button>
   )
 }
 
-const WitnessModal = ({ witnesses, suspects, onClose }) => {
+const WitnessModal = ({
+  witnesses,
+  discoveredWitnesses = {},
+  suspects,
+  staffInterviewsLeft = 0,
+  onInterviewStaff,
+  onClose
+}) => {
   const [selectedSuspect, setSelectedSuspect] = useState(suspects[0])
-  const statements = witnesses[selectedSuspect] || []
+  const discoveredStatements = discoveredWitnesses[selectedSuspect] || []
+  const totalStatements = witnesses[selectedSuspect]?.length || 0
   const isMobile = useIsMobile()
+
+  const canInterview = staffInterviewsLeft > 0 && onInterviewStaff
 
   return (
     <ResponsiveModal
@@ -112,8 +130,32 @@ const WitnessModal = ({ witnesses, suspects, onClose }) => {
       borderColor="border-amber-600"
     >
       <p className="text-sm text-gray-400 mb-4">
-        Testimony collected from staff and guests about each suspect.
+        Interview staff or search servant areas to collect testimony about suspects.
       </p>
+
+      {/* Interview Staff Action */}
+      <div className="mb-4 p-3 bg-gray-700 rounded-lg flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <UserSearch className="w-5 h-5 text-amber-400" />
+          <div>
+            <span className="text-sm font-bold text-white">Interview Staff</span>
+            <span className="text-xs text-gray-400 ml-2">
+              ({staffInterviewsLeft} remaining)
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={() => onInterviewStaff && onInterviewStaff(selectedSuspect)}
+          disabled={!canInterview}
+          className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
+            canInterview
+              ? 'bg-amber-600 hover:bg-amber-700 text-white'
+              : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          Ask About {selectedSuspect.split(' ').pop()}
+        </button>
+      </div>
 
       <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-4'}`}>
         {/* Suspect List - Horizontal on mobile */}
@@ -124,7 +166,8 @@ const WitnessModal = ({ witnesses, suspects, onClose }) => {
               <div key={suspect} className={isMobile ? 'flex-shrink-0 w-40' : ''}>
                 <SuspectSummaryCard
                   suspect={suspect}
-                  statements={witnesses[suspect] || []}
+                  discoveredStatements={discoveredWitnesses[suspect] || []}
+                  totalStatements={witnesses[suspect]?.length || 0}
                   isSelected={selectedSuspect === suspect}
                   onClick={() => setSelectedSuspect(suspect)}
                 />
@@ -137,13 +180,22 @@ const WitnessModal = ({ witnesses, suspects, onClose }) => {
         <div className={isMobile ? '' : 'col-span-3'}>
           <h3 className="text-lg font-bold text-white mb-4">
             Statements About {selectedSuspect}
+            <span className="text-sm font-normal text-gray-400 ml-2">
+              ({discoveredStatements.length}/{totalStatements})
+            </span>
           </h3>
 
-          {statements.length === 0 ? (
-            <p className="text-gray-400 italic">No witness statements collected yet.</p>
+          {discoveredStatements.length === 0 ? (
+            <div className="text-center py-8 bg-gray-800 rounded-lg">
+              <UserSearch className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-400 italic mb-2">No witness statements collected yet.</p>
+              <p className="text-xs text-gray-500">
+                Interview staff or search Servant Quarters/Kitchen to gather gossip.
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
-              {statements.map((statement, idx) => (
+              {discoveredStatements.map((statement, idx) => (
                 <StatementCard key={idx} statement={statement} />
               ))}
             </div>
